@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JWTAuth.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
     [Authorize("bearer")]
+    [Route("api/[controller]")]
     public class ValuesController : ControllerBase
     {
         // GET api/values

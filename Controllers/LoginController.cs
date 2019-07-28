@@ -13,19 +13,27 @@ namespace JWTAuth.Controllers
     [Route("api/[controller]")]
     public class LoginController : Controller
     {
+        private readonly UserRepository _userRepository;
+        private readonly SigningConfigurations _signingConfigurations;
+        private readonly TokenConfigurations _tokenConfigurations;
+
+        public LoginController(UserRepository userRepository,
+            SigningConfigurations signingConfigurations,
+            TokenConfigurations tokenConfigurations)
+        {
+            _userRepository = userRepository;
+            _signingConfigurations = signingConfigurations;
+            _tokenConfigurations = tokenConfigurations;
+        }
+
         [AllowAnonymous]
         [HttpPost]
-        public object Post(
-            [FromBody]User usuario,
-            [FromServices]UserRepository usersDAO,
-            [FromServices]SigningConfigurations signingConfigurations,
-            [FromServices]TokenConfigurations tokenConfigurations)
+        public object Post([FromBody]User usuario)
         {
-            usersDAO.Create();
             bool credenciaisValidas = false;
             if (usuario != null && usuario.UserID != 0)
             {
-                var usuarioBase = usersDAO.Find(usuario.UserID);
+                var usuarioBase = _userRepository.Find(usuario.UserID);
                 credenciaisValidas = (usuarioBase != null &&
                     usuario.UserID == usuarioBase.UserID &&
                     usuario.AccessKey == usuarioBase.AccessKey);
@@ -43,14 +51,14 @@ namespace JWTAuth.Controllers
 
                 DateTime dataCriacao = DateTime.Now;
                 DateTime dataExpiracao = dataCriacao +
-                    TimeSpan.FromSeconds(tokenConfigurations.Seconds);
+                    TimeSpan.FromSeconds(_tokenConfigurations.Seconds);
 
                 var handler = new JwtSecurityTokenHandler();
                 var securityToken = handler.CreateToken(new SecurityTokenDescriptor
                 {
-                    Issuer = tokenConfigurations.Issuer,
-                    Audience = tokenConfigurations.Audience,
-                    SigningCredentials = signingConfigurations.SigningCredentials,
+                    Issuer = _tokenConfigurations.Issuer,
+                    Audience = _tokenConfigurations.Audience,
+                    SigningCredentials = _signingConfigurations.SigningCredentials,
                     Subject = identity,
                     NotBefore = dataCriacao,
                     Expires = dataExpiracao

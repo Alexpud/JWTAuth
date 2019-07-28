@@ -37,6 +37,8 @@ namespace JWTAuth
             services.AddSingleton(signingConfigurations);
 
             services.AddTransient<UserRepository>();
+
+            // Basically sets tokenCOnfigurations with values read from appSettings  
             var tokenConfigurations = new TokenConfigurations();
             new ConfigureFromConfigurationOptions<TokenConfigurations>(
                 Configuration.GetSection("TokenConfigurations"))

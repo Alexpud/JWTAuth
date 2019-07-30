@@ -28,29 +28,31 @@ namespace JWTAuth.Controllers
 
         [AllowAnonymous]
         [HttpPost]
-        public object Post([FromBody]User usuario)
+        public object Post([FromBody]User userDto)
         {
-            bool credenciaisValidas = false;
-            if (usuario != null && usuario.UserID != 0)
+            bool validCredentials = false;
+            if (userDto == null)
             {
-                var usuarioBase = _userRepository.Find(usuario.UserID);
-                credenciaisValidas = (usuarioBase != null &&
-                    usuario.UserID == usuarioBase.UserID &&
-                    usuario.AccessKey == usuarioBase.AccessKey);
+                return null;
             }
             
-            if (credenciaisValidas)
+            var user = _userRepository.Find(userDto.UserID);
+            validCredentials = (user != null &&
+                    userDto.UserID == user.UserID &&
+                    userDto.Password == user.Password);
+            
+            if (validCredentials)
             {
                 ClaimsIdentity identity = new ClaimsIdentity(
-                    new GenericIdentity(usuario.UserID.ToString(), "Login"),
+                    new GenericIdentity(user.UserID.ToString(), "Login"),
                     new[] {
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
-                        new Claim(JwtRegisteredClaimNames.UniqueName, usuario.UserID.ToString())
+                        new Claim(JwtRegisteredClaimNames.UniqueName, userDto.UserID.ToString())
                     }
                 );
 
-                DateTime dataCriacao = DateTime.Now;
-                DateTime dataExpiracao = dataCriacao +
+                DateTime creationDate = DateTime.Now;
+                DateTime expirationDate = creationDate +
                     TimeSpan.FromSeconds(_tokenConfigurations.Seconds);
 
                 var handler = new JwtSecurityTokenHandler();
@@ -60,16 +62,16 @@ namespace JWTAuth.Controllers
                     Audience = _tokenConfigurations.Audience,
                     SigningCredentials = _signingConfigurations.SigningCredentials,
                     Subject = identity,
-                    NotBefore = dataCriacao,
-                    Expires = dataExpiracao
+                    NotBefore = creationDate,
+                    Expires = expirationDate
                 });
                 var token = handler.WriteToken(securityToken);
 
                 return new
                 {
                     authenticated = true,
-                    created = dataCriacao.ToString("yyyy-MM-dd HH:mm:ss"),
-                    expiration = dataExpiracao.ToString("yyyy-MM-dd HH:mm:ss"),
+                    created = creationDate.ToString("yyyy-MM-dd HH:mm:ss"),
+                    expiration = expirationDate.ToString("yyyy-MM-dd HH:mm:ss"),
                     accessToken = token,
                     message = "OK"
                 };
@@ -79,7 +81,7 @@ namespace JWTAuth.Controllers
                 return new
                 {
                     authenticated = false,
-                    message = "Falha ao autenticar"
+                    message = "Failed to authenticate"
                 };
             }
         }

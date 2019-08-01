@@ -17,5 +17,12 @@ namespace JWTAuth.Repositories
         {
             return _dbContext.Users.FirstOrDefault(x => x.UserID == userId);
         }
+
+        public User Create(User user)
+        {
+            _dbContext.Users.Add(user);
+            _dbContext.SaveChanges();
+            return user;
+        }
     }
 }

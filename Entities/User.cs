@@ -4,5 +4,6 @@ namespace JWTAuth.Entities
     {
         public int UserID { get; set; }
         public string Password { get; set; }
+        public string SALT { get; set; }
     }
 }
